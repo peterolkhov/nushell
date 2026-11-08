@@ -127,6 +127,11 @@ impl Command for MathRound {
                 )),
             },
             Example {
+                description: "Preserve large integers when no precision is specified.",
+                example: "9007199254740993 | math round",
+                result: Some(Value::test_int(9_007_199_254_740_993)),
+            },
+            Example {
                 description: "Apply negative precision to a list of numbers.",
                 example: "[123, 123.3, -123.4] | math round --precision -1",
                 result: Some(Value::list(
@@ -197,8 +202,9 @@ fn operate(value: Value, head: Span, precision: Option<i64>) -> Value {
         return value;
     }
 
-    // We treat int values as float values to share the rounding path.
+    // Integers need no rounding without precision; avoid a lossy float conversion.
     let float_val = match &value {
+        Value::Int { .. } if precision.is_none() => return value,
         Value::Int { val, .. } => *val as f64,
         Value::Float { val, .. } => *val,
         Value::Error { .. } => return value,

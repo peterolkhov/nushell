@@ -1,4 +1,34 @@
 use nu_test_support::prelude::*;
+use rstest::rstest;
+
+#[rstest]
+#[case(9_007_199_254_740_993)]
+#[case(-9_007_199_254_740_993)]
+#[case(i64::MAX - 1)]
+#[case(i64::MIN + 1)]
+#[case(i64::MAX)]
+#[case(i64::MIN)]
+fn preserves_exact_integers_without_precision(#[case] value: i64) -> Result {
+    test()
+        .run(format!("{value} | math round"))
+        .expect_value_eq(value)
+}
+
+#[test]
+fn const_round_preserves_exact_integer() -> Result {
+    test()
+        .run("const ROUND = 9007199254740993 | math round; $ROUND")
+        .expect_value_eq(9_007_199_254_740_993_i64)
+}
+
+#[test]
+fn preserves_exact_integers_in_list_valued_cell() -> Result {
+    let record = "{numbers: [9007199254740993 -9007199254740993], untouched: 1.5}";
+    let expected: Value = test().run(record)?;
+    test()
+        .run(format!("{record} | math round numbers"))
+        .expect_value_eq(expected)
+}
 
 #[test]
 fn can_round_very_large_numbers() -> Result {
